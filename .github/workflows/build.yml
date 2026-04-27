@@ -1,0 +1,108 @@
+name: Build and Publish Blender Flatpak
+
+on:
+  workflow_dispatch:
+    inputs:
+      flatpak_branch:
+        description: 'Flatpak branch / versi yang di-publish (contoh: stable, 4.5, 4.3)'
+        required: true
+        default: 'stable'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h
+
+      - name: Install flatpak-builder
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y flatpak flatpak-builder
+
+      - name: Add Flathub remote (for runtimes)
+        run: |
+          flatpak --user remote-add --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Cache Flatpak SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/flatpak
+          key: flatpak-sdk-freedesktop-24.08-v1
+
+      - name: Install Flatpak SDK (if not cached)
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
+        run: |
+          flatpak --user install -y flathub \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08
+
+      # Restore existing repo from gh-pages so versi lama tetap tersedia
+      - name: Restore existing repo from gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-existing
+        continue-on-error: true
+
+      - name: Setup repo directory
+        run: |
+          if [ -d gh-pages-existing ] && [ "$(ls -A gh-pages-existing)" ]; then
+            rsync -a gh-pages-existing/ repo/ --exclude='.git'
+          else
+            mkdir -p repo
+          fi
+
+      - name: Build Flatpak
+        run: |
+          flatpak-builder \
+            --user \
+            --repo=repo \
+            --force-clean \
+            --default-branch=${{ github.event.inputs.flatpak_branch }} \
+            build-dir \
+            io.github.Envyana.Blender.yml
+
+      - name: Update repo summary
+        run: flatpak build-update-repo repo
+
+      - name: Generate .flatpakref
+        run: |
+          cat > repo/envyana-blender.flatpakref << 'EOF'
+          [Flatpak Ref]
+          Title=Blender by Envyana
+          Name=io.github.Envyana.Blender
+          Branch=stable
+          Url=https://Envyana.github.io/blender-flatpak
+          RuntimeRepo=https://dl.flathub.org/repo/flathub.flatpakrepo
+          IsRuntime=false
+          EOF
+
+      - name: Generate .flatpakrepo
+        run: |
+          cat > repo/envyana.flatpakrepo << 'EOF'
+          [Flatpak Repo]
+          Title=Envyana Blender Repo
+          Comment=Custom Blender distribution by Envyana Studio
+          Url=https://Envyana.github.io/blender-flatpak
+          Homepage=https://github.com/Envyana/blender-flatpak
+          EOF
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./repo
+          keep_files: true
+          enable_jekyll: false

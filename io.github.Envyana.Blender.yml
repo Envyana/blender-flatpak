@@ -1,0 +1,46 @@
+app-id: io.github.Envyana.Blender
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: blender
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=host
+  - --share=network
+
+modules:
+  - name: blender
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/blender
+      - cp -r blender-4.5.9-linux-x64/. /app/blender/
+      - mkdir -p /app/bin
+      - install -Dm755 blender-wrapper.sh /app/bin/blender
+      - install -Dm644 io.github.Envyana.Blender.desktop
+          /app/share/applications/io.github.Envyana.Blender.desktop
+      - |
+        if [ -f /app/blender/blender.svg ]; then
+          install -Dm644 /app/blender/blender.svg \
+            /app/share/icons/hicolor/scalable/apps/io.github.Envyana.Blender.svg
+        fi
+      - install -Dm644 io.github.Envyana.Blender.metainfo.xml
+          /app/share/metainfo/io.github.Envyana.Blender.metainfo.xml
+    sources:
+      - type: archive
+        url: https://download.blender.org/release/Blender4.5/blender-4.5.9-linux-x64.tar.xz
+        sha256: dcdc3eca6c9825bb35a8033b689c053f3cb5a9b0cd2a61b2eac2a49436b4ad3d
+
+      - type: script
+        dest-filename: blender-wrapper.sh
+        commands:
+          - exec /app/blender/blender "$@"
+
+      - type: file
+        path: io.github.Envyana.Blender.desktop
+
+      - type: file
+        path: io.github.Envyana.Blender.metainfo.xml

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Blender 4.5 (Envyana)
+Comment=Free and Open 3D Creation Software
+Exec=blender %f
+Icon=io.github.Envyana.Blender
+Terminal=false
+Type=Application
+Categories=Graphics;3DGraphics;VideoEditing;
+MimeType=application/x-blender;
+StartupNotify=true
