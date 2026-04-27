@@ -17,7 +17,7 @@ modules:
     buildsystem: simple
     build-commands:
       - mkdir -p /app/blender
-      - cp -r blender-4.5.9-linux-x64/. /app/blender/
+      - cp -r blender-src/. /app/blender/
       - mkdir -p /app/bin
       - install -Dm755 blender-wrapper.sh /app/bin/blender
       - install -Dm644 io.github.Envyana.Blender.desktop
@@ -33,6 +33,8 @@ modules:
       - type: archive
         url: https://download.blender.org/release/Blender4.5/blender-4.5.9-linux-x64.tar.xz
         sha256: dcdc3eca6c9825bb35a8033b689c053f3cb5a9b0cd2a61b2eac2a49436b4ad3d
+        dest: blender-src
+        strip-components: 1
 
       - type: script
         dest-filename: blender-wrapper.sh
