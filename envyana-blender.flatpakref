@@ -1,0 +1,7 @@
+[Flatpak Ref]
+Title=Blender by Envyana
+Name=io.github.Envyana.Blender
+Branch=stable
+Url=https://Envyana.github.io/blender-flatpak
+RuntimeRepo=https://dl.flathub.org/repo/flathub.flatpakrepo
+IsRuntime=false
