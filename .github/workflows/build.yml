@@ -32,7 +32,8 @@ jobs:
 
       - name: Setup repo directory
         run: |
-          if [ -d gh-pages-existing ] && [ "$(ls -A gh-pages-existing)" ]; then
+          # Hanya gunakan gh-pages sebagai base kalau sudah ada ostree repo valid (ada folder objects/)
+          if [ -d gh-pages-existing/objects ]; then
             cp -r gh-pages-existing/. repo/
             rm -rf repo/.git
           else
